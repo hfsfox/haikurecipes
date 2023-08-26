@@ -1,0 +1,69 @@
+From 32a7181e1a2f1325b2a5879a80075700e6d83685 Mon Sep 17 00:00:00 2001
+From: hfsfox <darkkitsunezx128k2309@gmail.com>
+Date: Fri, 3 Feb 2023 02:29:47 +0200
+Subject: network fix
+
+
+diff --git a/libi2pd/util.cpp b/libi2pd/util.cpp
+index f0e9a7c..8ba3d3c 100644
+--- a/libi2pd/util.cpp
++++ b/libi2pd/util.cpp
+@@ -26,6 +26,16 @@
+ # include <AvailabilityMacros.h>
+ #endif
+ 
++#if defined(__HAIKU__)
++#include <posix/pthread.h>
++#include <posix/sys/sockio.h>
++#include <posix/sys/ioctl.h>
++#ifndef _DEFAULT_SOURCE
++#define _DEFAULT_SOURCE
++#include <bsd/ifaddrs.h>
++#endif
++#endif
++
+ #ifdef _WIN32
+ #include <stdlib.h>
+ #include <string.h>
+@@ -160,7 +170,7 @@ namespace util
+ #elif defined(__NetBSD__)
+ 		pthread_setname_np(pthread_self(), "%s", (void *)name);
+ #elif !defined(__gnu_hurd__)
+-		pthread_setname_np(pthread_self(), name);
++//		pthread_setname_np(pthread_self(), name);
+ #endif
+ 	}
+ 
+-- 
+2.37.3
+
+
+From 2272f7f7a526eaf43f25e5f95dd48fa6fb906ff5 Mon Sep 17 00:00:00 2001
+From: hfsfox <darkkitsunezx128k2309@gmail.com>
+Date: Fri, 3 Feb 2023 03:15:37 +0200
+Subject: network and config path fix
+
+
+diff --git a/libi2pd/FS.cpp b/libi2pd/FS.cpp
+index 7334550..9c252f3 100644
+--- a/libi2pd/FS.cpp
++++ b/libi2pd/FS.cpp
+@@ -146,6 +146,15 @@ namespace fs {
+ 			return;
+ 		}
+ #endif // ANDROID
++#if defined(HAIKU)
++		char *home = getenv("HOME");
++		if (home != NULL && strlen(home) > 0) {
++			dataDir = std::string(home) + "/config/settings/" + appName;
++		} else {
++			dataDir = "/tmp/" + appName;
++		}
++		return
++#endif //Haiku
+ 		// use /home/user/.i2pd or /tmp/i2pd
+ 		char *home = getenv("HOME");
+ 		if (home != NULL && strlen(home) > 0) {
+-- 
+2.37.3
+
